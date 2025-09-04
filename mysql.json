@@ -1,0 +1,38 @@
+[
+  {
+    "title": "MySQL架构与工作原理",
+    "content": "MySQL架构分为Server层和存储引擎层。Server层包括连接器、查询缓存、解析器/分析器、优化器和执行器。连接器负责客户端连接管理，使用长连接减少创建和释放连接的开销。查询缓存在MySQL 8.0中已被移除，因为SQL语句微小变化就会导致缓存失效。解析器将SQL语句解析为抽象语法树，优化器决定最佳执行计划。存储引擎层负责数据的存储和检索，InnoDB是默认引擎，支持事务和行级锁。",
+    "example": "连接器使用长连接管理，例如：druid、c3p0、dbcp等连接池技术"
+  },
+  {
+    "title": "索引原理与优化",
+    "content": "索引类似于书的目录，通过B+树结构实现快速定位。B+树叶子节点包含实际数据指针，非叶子节点存储索引键。索引优化要点：选择合适的索引列（WHERE、JOIN、ORDER BY频繁使用的列）；遵循最左前缀原则；避免索引失效（不使用计算、函数、LIKE '%xxx%'）；使用覆盖索引减少回表。组合索引的列顺序很重要，查询条件必须包含最左列才能有效使用索引。",
+    "example": "CREATE INDEX idx_name_age ON users(name, age); SELECT * FROM users WHERE name='张三' AND age>18; -- 有效使用索引"
+  },
+  {
+    "title": "事务与隔离级别",
+    "content": "事务具有ACID特性：原子性（要么全部成功，要么全部失败）、一致性（事务前后数据保持一致）、隔离性（事务之间相互隔离）、持久性（提交后永久保存）。MySQL支持四种隔离级别：读未提交（脏读）、读已提交（不可重复读）、可重复读（幻读）、序列化（串行化）。InnoDB使用MVCC（多版本并发控制）实现可重复读隔离级别，通过undo log实现一致性视图。事务日志（redo log和undo log）保证事务的持久性和回滚能力。",
+    "example": "START TRANSACTION; UPDATE accounts SET balance = balance - 100 WHERE user_id = 1; COMMIT; -- 保证转账操作的原子性"
+  },
+  {
+    "title": "JSON字段处理",
+    "content": "MySQL 5.7+原生支持JSON数据类型。存储时，JSON数据被解析为内部树状结构，序列化为紧凑二进制格式存储。查询时支持JSON函数如JSON_EXTRACT、JSON_SET等。JSON字段可以被索引（生成虚拟列后建立索引），但不支持全文索引。嵌套JSON对象能被快速定位和解析，存储原理与普通列相似，但使用了专门的JSON处理引擎。",
+    "example": "CREATE TABLE products (id INT PRIMARY KEY, details JSON); INSERT INTO products VALUES (1, '{\"color\": \"red\", \"size\": \"M\"}'); SELECT details->'.color′FROMproductsWHEREdetails−>′.color ′ FROMproductsWHEREdetails−> ′ .size' = 'M';"
+  },
+  {
+    "title": "实际应用案例",
+    "content": "电商订单管理系统：使用UPDATE语句实时更新库存，确保订单处理时库存准确性。社交网络好友关系：使用InnoDB的外键约束和联合主键实现高效好友关系管理。在线教育学习进度：使用批量INSERT记录学习进度，便于统计分析和个性化推荐。这些案例展示了MySQL在高并发、数据一致性要求高的场景中的实际应用。",
+    "example": "UPDATE products SET stock_quantity = stock_quantity - 1 WHERE product_id = 'specific_product'; -- 电商库存更新"
+  },
+  {
+    "title": "性能优化实践",
+    "content": "分页优化：使用id > offset代替LIMIT offset, count，减少扫描行数。避免全表扫描：确保WHERE条件使用索引。慢查询分析：使用EXPLAIN分析查询计划。索引优化：创建覆盖索引，避免回表查询。事务控制：合理设置事务隔离级别，避免长事务导致锁竞争。存储引擎选择：根据业务特点选择合适的存储引擎，InnoDB适合事务型应用，MyISAM适合读多写少场景。",
+    "example": "SELECT * FROM users WHERE id > 1000 LIMIT 20; -- 替代SELECT * FROM users LIMIT 1000, 20"
+  },
+  {
+    "title": "存储引擎原理",
+    "content": "InnoDB是MySQL默认存储引擎，使用B+树索引，支持行级锁和事务。数据存储在表空间中，采用聚簇索引（主键索引）组织数据。记录头信息包含delete_mask（删除标记）、min_rec_mask（B+树最小记录标记）、n_owned（分组记录数）、heap_no（记录物理位置）等。InnoDB使用双写缓冲区（double write buffer）防止页损坏，确保数据可靠性。MVCC通过undo log实现多版本并发控制，提高并发性能。",
+    "example": "InnoDB中主键索引（聚簇索引）的叶子节点存储实际数据，而非主键索引的叶子节点存储主键值"
+  }
+]
+

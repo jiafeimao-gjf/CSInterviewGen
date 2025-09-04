@@ -1,0 +1,114 @@
+[
+  {
+    "title": "MySQL架构分层",
+    "content": "MySQL架构分为Server层和存储引擎层。Server层包括连接器、查询缓存、解析器、优化器和执行器；存储引擎层负责数据的存储和检索。连接器管理客户端连接，解析器将SQL解析为抽象语法树，优化器决定最佳执行计划，存储引擎如InnoDB提供数据存储和事务支持。"
+  },
+  {
+    "title": "InnoDB存储引擎原理",
+    "content": "InnoDB是MySQL默认存储引擎，使用B+树索引实现数据存储。支持行级锁、事务和外键约束。数据存储采用聚簇索引（主键索引），主键索引的叶子节点存储实际数据，非主键索引的叶子节点存储主键值。InnoDB使用双写缓冲区（double write buffer）防止页损坏，确保数据可靠性。"
+  },
+  {
+    "title": "B+树索引原理",
+    "content": "B+树是MySQL索引的底层数据结构。B+树的非叶子节点仅存储索引键，叶子节点存储实际数据指针。所有叶子节点通过指针连接成双向链表，便于范围查询。B+树高度低，查询效率高，通常只需2-3次I/O即可定位数据。"
+  },
+  {
+    "title": "索引优化原则",
+    "content": "索引优化关键点：选择合适的索引列（WHERE、JOIN、ORDER BY频繁使用的列）；遵循最左前缀原则；避免索引失效（不使用计算、函数、LIKE '%xxx%'）；使用覆盖索引减少回表查询；组合索引的列顺序很重要，查询条件必须包含最左列才能有效使用索引。"
+  },
+  {
+    "title": "事务ACID特性",
+    "content": "事务具有ACID特性：原子性（要么全部成功，要么全部失败）、一致性（事务前后数据保持一致）、隔离性（事务之间相互隔离）、持久性（提交后永久保存）。InnoDB通过undo log实现回滚，redo log保证持久性。"
+  },
+  {
+    "title": "MySQL隔离级别",
+    "content": "MySQL支持四种隔离级别：读未提交（脏读）、读已提交（不可重复读）、可重复读（幻读）、序列化（串行化）。InnoDB默认使用可重复读隔离级别，通过MVCC（多版本并发控制）实现，避免了幻读问题。"
+  },
+  {
+    "title": "MVCC多版本并发控制",
+    "content": "MVCC通过undo log实现多版本并发控制，为每个事务创建数据快照。读操作不加锁，写操作通过undo log记录旧版本数据。不同隔离级别下MVCC实现方式不同，可重复读级别下通过Read View机制保证一致性。"
+  },
+  {
+    "title": "锁机制：行级锁与表级锁",
+    "content": "InnoDB支持行级锁，减少锁冲突，提高并发性能。行级锁包括共享锁（S锁）和排他锁（X锁）。表级锁包括表锁（LOCK TABLES）和元数据锁（MDL）。锁竞争是性能瓶颈的主要原因，合理设计索引和事务可以减少锁等待。"
+  },
+  {
+    "title": "redo log与undo log",
+    "content": "redo log（重做日志）用于保证事务的持久性，记录数据修改前后的值，实现崩溃恢复。undo log（回滚日志）用于事务回滚和MVCC，记录数据修改前的旧值。redo log是顺序写，性能高；undo log用于恢复和一致性读。"
+  },
+  {
+    "title": "慢查询分析与优化",
+    "content": "慢查询日志记录执行时间超过long_query_time的SQL语句。通过EXPLAIN分析查询计划，查看是否使用索引、是否全表扫描。优化方法包括添加合适索引、重写查询语句、分页优化（使用id > offset代替LIMIT offset, count）。"
+  },
+  {
+    "title": "查询优化器工作原理",
+    "content": "查询优化器决定SQL的最佳执行计划。基于成本模型（IO成本、CPU成本）评估不同执行计划的效率。优化器会考虑索引、连接顺序、排序方式等因素。通过EXPLAIN语句可以查看优化器选择的执行计划。"
+  },
+  {
+    "title": "InnoDB缓冲池机制",
+    "content": "InnoDB缓冲池（Buffer Pool）是内存中用于缓存数据和索引的区域。默认大小128MB，可通过innodb_buffer_pool_size参数调整。缓冲池减少磁盘I/O，提高查询性能。缓冲池使用LRU算法管理，包含老LRU链表和新LRU链表。"
+  },
+  {
+    "title": "MySQL复制原理",
+    "content": "MySQL主从复制基于binlog实现。主库将数据变更记录到binlog，从库IO线程读取binlog，SQL线程执行binlog中的命令。复制方式包括异步复制、半同步复制和组复制。复制延迟是常见问题，可通过优化网络、调整参数解决。"
+  },
+  {
+    "title": "InnoDB的聚簇索引",
+    "content": "聚簇索引（Clustered Index）是InnoDB的主键索引，数据按主键顺序存储。聚簇索引的叶子节点包含实际数据行，而非聚簇索引的叶子节点包含主键值。聚簇索引的优缺点：查询主键快，但插入新数据可能导致页分裂，非主键查询需要回表。"
+  },
+  {
+    "title": "MySQL的查询缓存",
+    "content": "MySQL查询缓存默认关闭，8.0版本已移除。查询缓存将SQL查询结果缓存到内存中，相同查询直接返回结果。缓存失效条件：表数据变化、查询包含函数、查询包含临时表等。由于缓存失效频繁，不推荐使用，建议通过应用层缓存优化。"
+  },
+  {
+    "title": "分库分表策略",
+    "content": "当单表数据量过大时，需要分库分表。常见策略：按范围分片（如用户ID区间）、哈希分片（如用户ID取模）、一致性哈希分片。分库分表带来分布式事务、跨库查询等挑战，需要使用分布式事务框架（如Seata）和中间件（如ShardingSphere）解决。"
+  },
+  {
+    "title": "MySQL分区表",
+    "content": "MySQL分区表将大表按某种规则（如范围、列表、哈希）分成多个小表，逻辑上仍是一个表。分区可以提高查询性能，减少维护成本。支持Range、List、Hash、Key四种分区方式。分区表适合处理历史数据、按时间分区的场景。"
+  },
+  {
+    "title": "MySQL的字符集与排序规则",
+    "content": "字符集（Character Set）定义字符的编码方式，排序规则（Collation）定义字符的比较和排序规则。常见字符集：utf8、utf8mb4（支持emoji）。选择合适的字符集和排序规则对性能和存储有影响。utf8mb4比utf8占用更多空间，但支持更多字符。"
+  },
+  {
+    "title": "InnoDB的锁升级机制",
+    "content": "InnoDB在特定情况下会将行级锁升级为表级锁，如执行ALTER TABLE、LOCK TABLES等操作。锁升级是为了简化锁管理，但会降低并发性能。避免锁升级的方法：避免在事务中执行DDL语句，合理设计表结构和索引。"
+  },
+  {
+    "title": "MySQL的连接池",
+    "content": "MySQL连接池用于管理数据库连接，避免频繁创建和销毁连接的开销。连接池参数包括：最小连接数（min_pool_size）、最大连接数（max_pool_size）、连接超时时间（connection_timeout）。常用连接池：Druid、HikariCP、C3P0。"
+  },
+  {
+    "title": "MySQL的binlog格式",
+    "content": "binlog有三种格式：STATEMENT（语句模式）、ROW（行模式）、MIXED（混合模式）。STATEMENT记录SQL语句，ROW记录行数据变化，MIXED根据情况自动选择。ROW模式更安全，适合主从复制，但binlog文件较大。"
+  },
+  {
+    "title": "MySQL的慢查询日志",
+    "content": "慢查询日志记录执行时间超过long_query_time的SQL语句。开启方式：set global slow_query_log=on;。日志文件位置：slow_query_log_file。通过分析慢查询日志，可以发现性能瓶颈，优化SQL语句和索引。"
+  },
+  {
+    "title": "MySQL的性能监控工具",
+    "content": "常用性能监控工具：SHOW PROFILES、performance_schema、sys schema、pt-query-digest。SHOW PROFILES用于分析SQL执行时间，performance_schema提供详细性能指标，sys schema提供易用的视图，pt-query-digest用于分析慢查询日志。"
+  },
+  {
+    "title": "MySQL的表结构设计原则",
+    "content": "表结构设计原则：合理选择数据类型（如INT比VARCHAR节省空间）、使用主键、避免NULL（除非必要）、适当添加索引、考虑范式与反范式平衡。设计时考虑未来扩展性，避免频繁修改表结构。"
+  },
+  {
+    "title": "MySQL的批量插入优化",
+    "content": "批量插入比单条插入效率高，可以使用INSERT INTO ... VALUES (...), (...), (...)。批量大小建议：500-1000条/次。使用事务批量插入，减少提交次数。避免在事务中执行大量INSERT，防止事务过大导致锁等待。"
+  },
+  {
+    "title": "MySQL的分区表与分表",
+    "content": "分区表是单表物理分区，分表是多表逻辑分组。分区表适合数据量大但查询模式固定，分表适合数据量大且查询模式多变。分区表在查询时自动选择分区，分表需要应用层处理路由。分区表可减少I/O，分表可分散负载。"
+  },
+  {
+    "title": "MySQL的备份与恢复",
+    "content": "MySQL备份方式：物理备份（如xtrabackup）、逻辑备份（mysqldump）。物理备份速度快，恢复快，适合大数据库；逻辑备份灵活，可跨版本，适合小数据库。恢复时需考虑binlog，实现point-in-time恢复。"
+  },
+  {
+    "title": "MySQL的高可用方案",
+    "content": "MySQL高可用方案：主从复制（M-S）、主主复制（M-M）、组复制（Group Replication）、MHA（Master High Availability）。主从复制实现读写分离和数据备份，组复制实现自动故障转移，MHA在主库故障时自动切换。"
+  }
+]
