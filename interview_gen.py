@@ -1,7 +1,15 @@
 import json
 import os.path
+import ollama
 
-from src.backendProject.llmService.app import ollama_stream
+model_global = "gpt-oss:20b"
+
+
+def ollama_stream(prompt, model):
+    for chunk in ollama.generate(model=model, prompt=prompt,
+                                 stream=True):
+        text = chunk.get("response", "")
+        yield text
 
 
 def generate_interview():
@@ -22,7 +30,7 @@ def generate_interview():
                 # 调用大模型回答
                 response = ollama_stream(question[
                                              'question'] + "，请以10年开发经验的高级开发者，回答这个问题，要求有条理，内容丰富，实践与理论结合！",
-                                         "qwen3-coder:latest", key)
+                                         model_global)
                 for chunk in response:
                     print(chunk)
                     f.write(chunk)
@@ -48,14 +56,14 @@ def generate_mysql():
             prompt = (f"「{item['title']}」 请根据以下内容：\n{item['content']}\n 示例：\n{item['example']}\n 细化回答: \n "
                       f"要求：1. 回答要详细，内容丰富，实践与理论结合！2. 回答要符合中文语法规范！3、适当进行图示说明")
             f.write(prompt)
-            response = ollama_stream(prompt, "qwen3-coder:latest", item['title'])
+            response = ollama_stream(prompt, model_global)
             for chunk in response:
                 print(chunk)
                 f.write(chunk)
 
 
 def redis_interview():
-    read_json_llm_answer("redis.json", "redis")
+    read_json_llm_answer("redis.json", "redis_openai")
 
 
 def system_design_interview():
@@ -83,12 +91,39 @@ def read_json_llm_answer(json_file, output_dir):
                 prompt = (f"「{item['title']}」 请根据以下内容：\n{item['content']}\n 细化回答: \n "
                           f"要求：1. 回答要详细，内容丰富，实践与理论结合！2. 采用总分总的文章思路！3、适当进行图示说明")
                 f.write(prompt)
-                response = ollama_stream(prompt, "qwen3-coder:latest", item['title'])
+                response = ollama_stream(prompt, model_global)
                 for chunk in response:
                     print(chunk)
                     f.write(chunk)
 
 
+def chat_by_input():
+    print("基于大模型的问答系统")
+    while True:
+        prompt = input("请输入问题：")
+        if prompt == "exit":
+            break
+        chat_by_prompt(prompt)
+
+
+def chat_by_prompt(prompt):
+    response = ollama_stream(prompt, model_global)
+    length = 0
+    with open(f"{prompt.replace('/', '-')}.md", "w", encoding="utf-8") as f:
+        f.write(f"# 问题：{prompt}\n")
+        f.write(f"回答如下：\n")
+        for chunk in response:
+            # print(chunk)
+            length += len(chunk)
+            if length % 100 == 0:
+                print(f"当前长度：{length}")
+            f.write(chunk)
+
+
 if __name__ == '__main__':
-    print("这个是面试题生成器")
-    generate_mysql_new()
+    # generate_mysql_new()
+    # prompt = "帮我写一篇关于互联网系统架构演变（基于Java的微服务架构）的文章，要求内容丰富，实践与理论结合，适当进行图示说明"
+    # chat_by_prompt(prompt)
+    # redis_interview()
+
+    chat_by_input()
