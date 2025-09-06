@@ -9,6 +9,8 @@ def ollama_stream(prompt, model):
     for chunk in ollama.generate(model=model, prompt=prompt,
                                  stream=True):
         text = chunk.get("response", "")
+        if len(text) == 0:
+            text = chunk.get("thinking", "")
         yield text
 
 
@@ -107,17 +109,18 @@ def chat_by_input():
 
 
 def chat_by_prompt(prompt):
-    response = ollama_stream(prompt, model_global)
     length = 0
-    with open(f"{prompt.replace('/', '-')}.md", "w", encoding="utf-8") as f:
+    with open(f"chat_answers/{prompt.replace('/', '-')}.md", "a+", encoding="utf-8") as f:
         f.write(f"# 问题：{prompt}\n")
         f.write(f"回答如下：\n")
-        for chunk in response:
+        for chunk in ollama_stream(prompt, model_global):
             # print(chunk)
-            length += len(chunk)
-            if length % 100 == 0:
+            if chunk:
+                length += len(chunk)
+            if length > 0 and length % 100 == 0:
                 print(f"当前长度：{length}")
-            f.write(chunk)
+            if chunk is not None:
+                f.write(chunk)
 
 
 if __name__ == '__main__':
